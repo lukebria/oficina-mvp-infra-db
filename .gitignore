@@ -1,0 +1,41 @@
+# ==========================================
+# 1. ARQUIVOS E PASTAS DO TERRAFORM
+# ==========================================
+# Ignora o cache do Terraform e os binários pesados dos provedores
+.terraform/
+.terraform.lock.hcl
+
+# Ignora os arquivos de estado locais (pois já estamos usando o S3 remoto)
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+
+# Ignora planos gerados localmente e arquivos de variáveis sensíveis
+*.tfplan
+*.tfvars
+*.tfvars.json
+
+# Ignora logs de crash ou execução do Terraform
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# ==========================================
+# 2. CHAVES E CREDENCIAIS DE SEGURANÇA
+# ==========================================
+# Evita vazar credenciais ou chaves da AWS por engano
+*.pem
+*.pub
+.aws/
+
+# ==========================================
+# 3. SISTEMA OPERACIONAL E IDEs
+# ==========================================
+# VS Code / JetBrains / Mac
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
