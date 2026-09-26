@@ -161,13 +161,51 @@ A aplicação principal (`oficina-mvp-java-backend`) hoje se conecta a um Postgr
 dentro do próprio cluster EKS (`k8s/banco.yaml`). Depois do primeiro `apply` bem-sucedido deste repositório, a
 migração prevista é:
 
-1. Remover `k8s/banco.yaml` do repositório da aplicação.
-2. Atualizar `k8s/config-secret.yaml`/o pipeline para que `DB_HOST`/`DB_PORT`/`DB_NAME` apontem para os outputs
-   deste repositório (`rds_endpoint`, `rds_port`, `rds_db_name`).
-3. Migrar dados existentes, se houver algum ambiente rodando com o Postgres em pod (`pg_dump`/`pg_restore`).
+1. Migrar os dados existentes (roteiro completo na seção 7 abaixo), se houver algum ambiente rodando com o
+   Postgres em pod.
+2. Configurar a variable `DB_HOST` (GitHub, repositório `oficina-mvp-java-backend`) com o valor de
+   `terraform output rds_endpoint` deste repositório — o pipeline já está preparado para isso
+   (`k8s/config-secret.yaml` usa `${DB_HOST}` com fallback `banco-service`, ver README daquele repositório) —
+   **não precisa editar YAML nem a pipeline**, só configurar a variable.
+3. Depois de confirmar que a aplicação está saudável apontando pro RDS, remover `k8s/banco.yaml` do
+   repositório da aplicação (o `Deployment`/`Service` do Postgres em pod deixam de ser necessários).
 
 Detalhe completo em `plans/01-infra-db-novo-repo.md` (repositório de specs do projeto,
 `POST-TECH/FASE-3/plans/`).
+
+## 🔄 7. Migração de dados (Postgres em pod → RDS)
+
+Roteiro manual — rodar depois que este repositório já tiver sido aplicado (RDS no ar) e **antes** de remover
+`k8s/banco.yaml` (senão não sobra o que migrar). Usa o próprio pod do Postgres em cluster para fazer o
+`pg_dump`/`pg_restore`, sem precisar expor o RDS publicamente nem instalar nada extra — o pod já está na mesma
+VPC/rede que o RDS.
+
+```bash
+# 1. Descobrir o namespace e o pod do Postgres em cluster (homolog ou prod)
+kubectl get pods -A -l app=banco
+
+# 2. Abrir um shell dentro do pod (troque <namespace> e <pod> pelo que apareceu acima)
+kubectl exec -it <pod> -n <namespace> -- sh
+
+# --- a partir daqui, comandos DENTRO do pod ---
+
+# 3. Gerar o dump do banco atual (usa a própria senha do container, já disponível como env var)
+PGPASSWORD="$POSTGRES_PASSWORD" pg_dump -h localhost -U oficina -d oficina_mvp -F c -f /tmp/dump.sql
+
+# 4. Restaurar no RDS (pegue o endpoint com `terraform output rds_endpoint` e a senha no Secrets Manager,
+#    `aws secretsmanager get-secret-value --secret-id oficina-mecnica-lab-rds-password --query SecretString --output text`)
+PGPASSWORD="<senha-do-rds>" pg_restore -h <rds-endpoint> -U oficina_admin -d oficina -F c --no-owner --no-privileges /tmp/dump.sql
+
+# 5. Sair do pod
+exit
+```
+
+Depois de confirmar que os dados aparecem certos no RDS (ex: `psql` rápido contando linhas nas tabelas
+principais), seguir os passos 2 e 3 da seção 6 acima (trocar `DB_HOST` e remover `k8s/banco.yaml`).
+
+> Nomes de usuário/banco acima (`oficina`/`oficina_mvp` no pod, `oficina_admin`/`oficina` no RDS) refletem os
+> defaults atuais de `k8s/banco.yaml` (app) e `variables.tf` (este repo) — conferir se não mudaram antes de
+> copiar os comandos.
 
 ## 🖼️ 6. Diagrama
 
