@@ -99,8 +99,8 @@ falha, porque o backend não consegue adquirir lock numa tabela inexistente. Ord
 | `db_engine_version` | `16` (só a major: a AWS usa a minor default mais recente — minors antigas são retiradas, a 16.4 já não existe) | Versão do PostgreSQL |
 | `db_instance_class` | `db.t3.micro` | Classe da instância RDS |
 | `db_allocated_storage` | `20` | Armazenamento em GB |
-| `db_name` | `oficina` | Nome do banco de dados inicial |
-| `db_username` | `oficina_admin` | Usuário administrador (sensível) |
+| `db_name` | `oficina_mvp` | Nome do banco de dados inicial |
+| `db_username` | `oficina` | Usuário administrador (sensível) |
 | `infra_state_bucket` | `oficina-mvp-tfstate-536036031274` | Bucket do state do repo de infra K8s (para o remote state) |
 | `infra_state_key` | `oficina-lab/terraform.tfstate` | Key do state do repo de infra K8s |
 
@@ -194,7 +194,7 @@ PGPASSWORD="$POSTGRES_PASSWORD" pg_dump -h localhost -U oficina -d oficina_mvp -
 
 # 4. Restaurar no RDS (pegue o endpoint com `terraform output rds_endpoint` e a senha no Secrets Manager,
 #    `aws secretsmanager get-secret-value --secret-id oficina-mecnica-lab-rds-password --query SecretString --output text`)
-PGPASSWORD="<senha-do-rds>" pg_restore -h <rds-endpoint> -U oficina_admin -d oficina -F c --no-owner --no-privileges /tmp/dump.sql
+PGPASSWORD="<senha-do-rds>" pg_restore -h <rds-endpoint> -U oficina -d oficina_mvp -F c --no-owner --no-privileges /tmp/dump.sql
 
 # 5. Sair do pod
 exit
@@ -203,9 +203,8 @@ exit
 Depois de confirmar que os dados aparecem certos no RDS (ex: `psql` rápido contando linhas nas tabelas
 principais), seguir os passos 2 e 3 da seção 6 acima (trocar `DB_HOST` e remover `k8s/banco.yaml`).
 
-> Nomes de usuário/banco acima (`oficina`/`oficina_mvp` no pod, `oficina_admin`/`oficina` no RDS) refletem os
-> defaults atuais de `k8s/banco.yaml` (app) e `variables.tf` (este repo) — conferir se não mudaram antes de
-> copiar os comandos.
+> Banco/usuário do RDS (`oficina_mvp`/`oficina`) são os mesmos do Postgres em pod e do `application.yml` da
+> aplicação — alinhados de propósito, para trocar só `DB_HOST`/`DB_PASSWORD` na migração.
 
 ## 🖼️ 6. Diagrama
 

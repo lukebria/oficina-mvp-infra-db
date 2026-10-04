@@ -37,13 +37,13 @@ variable "db_allocated_storage" {
 variable "db_name" {
   description = "Nome do banco de dados inicial criado no RDS"
   type        = string
-  default     = "oficina"
+  default     = "oficina_mvp"
 }
 
 variable "db_username" {
   description = "Usuário administrador do banco"
   type        = string
-  default     = "oficina_admin"
+  default     = "oficina"
   sensitive   = true
 }
 
