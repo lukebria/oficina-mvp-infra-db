@@ -1,7 +1,7 @@
 # ==============================================================================
 # BACKEND CONFIGURATION
 # ==============================================================================
-# Reaproveita o mesmo bucket S3 do repositório oficina-mvp-infra-iac (key
+# Reaproveita o mesmo bucket S3 de state do oficina-mvp-infra-iac (key
 # separada) e a mesma tabela DynamoDB de lock (compartilhada entre os dois
 # states - o LockID inclui bucket+key, então não há colisão).
 #
@@ -14,7 +14,7 @@
 
 terraform {
   backend "s3" {
-    bucket         = "oficina-mvp-infra-iac"
+    bucket         = "oficina-mvp-tfstate-536036031274"
     key            = "oficina-lab/db/terraform.tfstate"
     region         = "us-east-1"
     encrypt        = true
