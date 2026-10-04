@@ -50,7 +50,7 @@ variable "db_username" {
 variable "infra_state_bucket" {
   description = "Bucket S3 onde fica o state do repositório oficina-mvp-infra-iac"
   type        = string
-  default     = "oficina-mvp-infra-iac"
+  default     = "oficina-mvp-tfstate-536036031274"
 }
 
 variable "infra_state_key" {

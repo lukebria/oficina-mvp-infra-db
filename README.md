@@ -79,9 +79,9 @@ Mesmas restrições do repositório `oficina-mvp-infra-iac` (mesma conta de labo
 
 ### 3.4. State remoto
 
-Backend S3 (`backends.tf`): reaproveita o **mesmo bucket** do `oficina-mvp-infra-iac`
-(`oficina-mvp-infra-iac`), com uma **key própria** (`oficina-lab/db/terraform.tfstate`) para não colidir com o
-state daquele repositório. Lock via a **mesma tabela DynamoDB** (`oficina-mvp-infra-iac-tf-lock`) — states
+Backend S3 (`backends.tf`): reaproveita o **mesmo bucket** de state do `oficina-mvp-infra-iac`
+(`oficina-mvp-tfstate-536036031274`), com uma **key própria** (`oficina-lab/db/terraform.tfstate`) para não
+colidir com o state daquele repositório. Lock via a **mesma tabela DynamoDB** (`oficina-mvp-infra-iac-tf-lock`) — states
 diferentes não colidem porque o `LockID` inclui bucket+key.
 
 🔗 **Dependência de ordem**: essa tabela de lock só existe depois que o `oficina-mvp-infra-iac` aplicar seu
@@ -101,7 +101,7 @@ falha, porque o backend não consegue adquirir lock numa tabela inexistente. Ord
 | `db_allocated_storage` | `20` | Armazenamento em GB |
 | `db_name` | `oficina` | Nome do banco de dados inicial |
 | `db_username` | `oficina_admin` | Usuário administrador (sensível) |
-| `infra_state_bucket` | `oficina-mvp-infra-iac` | Bucket do state do repo de infra K8s (para o remote state) |
+| `infra_state_bucket` | `oficina-mvp-tfstate-536036031274` | Bucket do state do repo de infra K8s (para o remote state) |
 | `infra_state_key` | `oficina-lab/terraform.tfstate` | Key do state do repo de infra K8s |
 
 ### 3.6. Outputs
