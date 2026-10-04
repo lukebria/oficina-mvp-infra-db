@@ -96,7 +96,7 @@ falha, porque o backend não consegue adquirir lock numa tabela inexistente. Ord
 | `aws_region` | `us-east-1` | Região AWS |
 | `project_name` | `oficina-mecnica-lab` | Nome base usado em tags e nomes de recursos |
 | `environment` | `lab` | Ambiente, usado só como tag |
-| `db_engine_version` | `16.4` | Versão do PostgreSQL |
+| `db_engine_version` | `16` (só a major: a AWS usa a minor default mais recente — minors antigas são retiradas, a 16.4 já não existe) | Versão do PostgreSQL |
 | `db_instance_class` | `db.t3.micro` | Classe da instância RDS |
 | `db_allocated_storage` | `20` | Armazenamento em GB |
 | `db_name` | `oficina` | Nome do banco de dados inicial |
