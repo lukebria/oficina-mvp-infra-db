@@ -19,7 +19,10 @@ resource "random_password" "db_password" {
 
 resource "aws_secretsmanager_secret" "db_password" {
   name = "${var.project_name}-rds-password"
-  tags = var.tags
+  # Lab: sem janela de recuperação. Com o default (30 dias) o nome fica reservado depois do destroy e o
+  # próximo apply falha ("already scheduled for deletion") - o ambiente é recriado a cada gravação/teste.
+  recovery_window_in_days = 0
+  tags                    = var.tags
 }
 
 resource "aws_secretsmanager_secret_version" "db_password" {
