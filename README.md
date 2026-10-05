@@ -142,6 +142,25 @@ terraform output rds_endpoint
 
 Para desfazer: `terraform destroy` (ou disparar manualmente o workflow `destroy_iac.yml`).
 
+### 3.7. Tags dos recursos (o que é cada coisa no console)
+
+Todo recurso AWS criado por este repositório leva as **tags comuns do projeto** (`default_tags` do provider):
+`Project=oficina-mvp` (igual nos 3 repos de Terraform), `Repository=oficina-mvp-infra-db`, `Component=banco-de-dados`,
+`Environment=lab`, `ManagedBy=terraform`, `Course=FIAP POSTECH 13SOAT - Tech Challenge Fase 3`. Além delas,
+cada recurso tem **`Name`** (o que aparece na coluna *Name* do console) e **`Description`**:
+
+| `Name` | Recurso | `Description` |
+|---|---|---|
+| `oficina-mvp-postgres` | RDS PostgreSQL | Banco PostgreSQL da aplicação |
+| `oficina-mvp-rds-sg` | Security Group | Libera o PostgreSQL (5432) somente para o cluster EKS |
+| `oficina-mvp-rds-subnets` | DB subnet group | Sub-redes onde o RDS pode rodar |
+| `oficina-mvp-rds-password` | Secrets Manager | Senha do banco (gerada pelo Terraform) |
+
+Para ver **todos** os recursos do projeto numa tela só: console AWS → **Resource Groups & Tag Editor → Tag Editor**
+→ Region `us-east-1`, Resource types `All supported`, Tag `Project` = `oficina-mvp` → *Search resources*.
+Os nomes técnicos (`oficina-mecnica-lab-...`, com o erro de digitação histórico) foram mantidos para não recriar
+recursos nem quebrar pipelines; a tag `Name` é o nome legível.
+
 ## ⚙️ 4. CI/CD (GitHub Actions)
 
 Dois workflows, exigindo os secrets `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` / `AWS_SESSION_TOKEN` e a
