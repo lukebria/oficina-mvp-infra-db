@@ -38,16 +38,9 @@ jobs:
       - name: Terraform Format Check
         run: terraform fmt -check
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
-          aws-region: ${{ vars.AWS_DEFAULT_REGION }}
-
-      - name: Terraform Init
-        run: terraform init
+      # Sem backend e sem credenciais AWS: valida sintaxe/schema mesmo com o Learner Lab desligado.
+      - name: Terraform Init (sem backend)
+        run: terraform init -backend=false
 
       - name: Terraform Validate
         run: terraform validate
@@ -58,6 +51,8 @@ jobs:
   plan:
     name: "2. Terraform Plan"
     needs: fmt-validate
+    # Chave de deploy (plans/10): precisa de credenciais AWS - só roda com DEPLOY_ENABLED=true ou disparo manual.
+    if: (vars.DEPLOY_ENABLED == 'true' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
 
     steps:
@@ -91,7 +86,8 @@ jobs:
   apply:
     name: "3. Terraform Apply"
     needs: plan
-    if: (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/homolog') && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    # Chave de deploy (plans/10): DEPLOY_ENABLED=true (ou disparo manual) + push/dispatch em homolog/master.
+    if: (vars.DEPLOY_ENABLED == 'true' || github.event_name == 'workflow_dispatch') && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/homolog') && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
 
     steps:
