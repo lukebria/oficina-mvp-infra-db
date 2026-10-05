@@ -145,12 +145,23 @@ Para desfazer: `terraform destroy` (ou disparar manualmente o workflow `destroy_
 ## ⚙️ 4. CI/CD (GitHub Actions)
 
 Dois workflows, exigindo os secrets `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` / `AWS_SESSION_TOKEN` e a
-variável `AWS_DEFAULT_REGION` (⚠️ **ainda não configurados neste repositório**):
+variável `AWS_DEFAULT_REGION` (configurados em 2026-10-04; os 3 secrets AWS expiram a cada sessão do Learner
+Lab e precisam ser regravados):
 
-- **`create_iac.yml`** — três jobs em cadeia: `fmt-validate` → `plan` → `apply`. Gatilhos de
+- **`create_iac.yml`** — três jobs em cadeia: `fmt-validate` (com `init -backend=false`, sem credenciais AWS) →
+  `plan` → `apply`. Gatilhos de
   `pull_request`/`push` cobrem `homolog` e `master`, seguindo o git flow do projeto (`feat/* → homolog →
   master`); `apply` roda automaticamente em push para qualquer uma das duas.
 - **`destroy_iac.yml`** — só dispara manualmente (`workflow_dispatch`).
+
+**Chave de deploy — variable `DEPLOY_ENABLED`** (o crédito do AWS Academy é limitado; detalhe em
+`plans/10-chave-deploy-enabled.md` no repositório de specs):
+- `true` → em push para `homolog`/`master`, executa automaticamente `plan` e `apply` (deploy automático de homologação e
+  produção, como pede o enunciado).
+- `false` ou ausente → o pipeline roda só o que não depende da AWS e **pula** (*skipped*) `plan` e `apply`. É o estado
+  padrão fora de uma janela de deploy, para um merge não subir recursos pagos.
+- **Disparo manual** (*Actions → Run workflow*) ignora a chave: rodar pelo botão já é uma decisão explícita.
+- Ligar/desligar: *Settings → Secrets and variables → Actions → Variables → `DEPLOY_ENABLED`*.
 
 Regras de proteção de branch (PR obrigatório, sem commit direto em `master`) ainda **não configuradas** neste
 repositório recém-criado — pendente, ver `plans/01-infra-db-novo-repo.md`.
