@@ -19,7 +19,7 @@ variable "environment" {
 variable "db_engine_version" {
   description = "Versão do engine PostgreSQL"
   type        = string
-  default     = "16.4"
+  default     = "16"
 }
 
 variable "db_instance_class" {
@@ -37,20 +37,20 @@ variable "db_allocated_storage" {
 variable "db_name" {
   description = "Nome do banco de dados inicial criado no RDS"
   type        = string
-  default     = "oficina"
+  default     = "oficina_mvp"
 }
 
 variable "db_username" {
   description = "Usuário administrador do banco"
   type        = string
-  default     = "oficina_admin"
+  default     = "oficina"
   sensitive   = true
 }
 
 variable "infra_state_bucket" {
   description = "Bucket S3 onde fica o state do repositório oficina-mvp-infra-iac"
   type        = string
-  default     = "oficina-mvp-infra-iac"
+  default     = "oficina-mvp-tfstate-536036031274"
 }
 
 variable "infra_state_key" {
