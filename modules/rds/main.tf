@@ -22,10 +22,10 @@ resource "aws_secretsmanager_secret" "db_password" {
   # Lab: sem janela de recuperação. Com o default (30 dias) o nome fica reservado depois do destroy e o
   # próximo apply falha ("already scheduled for deletion") - o ambiente é recriado a cada gravação/teste.
   recovery_window_in_days = 0
-  description             = "Senha do banco PostgreSQL da aplicacao (gerada pelo Terraform)"
+  description             = "Senha do banco PostgreSQL da aplicacao - gerada pelo Terraform"
   tags = merge(var.tags, {
     Name        = "oficina-mvp-rds-password"
-    Description = "Senha do banco PostgreSQL da aplicacao (gerada pelo Terraform)"
+    Description = "Senha do banco PostgreSQL da aplicacao - gerada pelo Terraform"
   })
 }
 
@@ -69,7 +69,7 @@ resource "aws_security_group" "rds" {
 
   tags = merge(var.tags, {
     Name        = "oficina-mvp-rds-sg"
-    Description = "Libera o PostgreSQL (5432) somente para o cluster EKS"
+    Description = "Libera o PostgreSQL porta 5432 somente para o cluster EKS"
   })
 }
 
@@ -105,6 +105,6 @@ resource "aws_db_instance" "this" {
 
   tags = merge(var.tags, {
     Name        = "oficina-mvp-postgres"
-    Description = "Banco PostgreSQL da aplicacao (oficina-mvp-java-backend)"
+    Description = "Banco PostgreSQL da aplicacao - oficina-mvp-java-backend"
   })
 }
