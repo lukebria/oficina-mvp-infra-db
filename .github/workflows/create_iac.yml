@@ -72,12 +72,25 @@ jobs:
         with:
           terraform_version: 1.5.0
 
+      # Plano 18: bucket de state da conta das credenciais (criado pelo oficina-mvp-infra-iac) - o mesmo bucket
+      # guarda o state do infra-iac, lido aqui pelo terraform_remote_state (rede e SG do cluster)
+      - name: State bucket
+        id: state
+        run: |
+          BUCKET=$(bash scripts/state-bucket.sh)
+          if ! aws s3api head-object --bucket "$BUCKET" --key oficina-lab/terraform.tfstate >/dev/null 2>&1; then
+            echo "::error::State do oficina-mvp-infra-iac não encontrado em $BUCKET. Suba o infra-iac primeiro."
+            exit 1
+          fi
+          echo "bucket=$BUCKET" >> "$GITHUB_OUTPUT"
+
       - name: Terraform Init
-        run: terraform init
+        run: terraform init -backend-config="bucket=${{ steps.state.outputs.bucket }}"
 
       - name: Terraform Plan
         env:
           TF_VAR_aws_region: ${{ vars.AWS_DEFAULT_REGION }}
+          TF_VAR_infra_state_bucket: ${{ steps.state.outputs.bucket }}
         run: terraform plan -input=false
 
   # ==========================================
@@ -107,10 +120,23 @@ jobs:
         with:
           terraform_version: 1.5.0
 
+      # Plano 18: bucket de state da conta das credenciais (criado pelo oficina-mvp-infra-iac) - o mesmo bucket
+      # guarda o state do infra-iac, lido aqui pelo terraform_remote_state (rede e SG do cluster)
+      - name: State bucket
+        id: state
+        run: |
+          BUCKET=$(bash scripts/state-bucket.sh)
+          if ! aws s3api head-object --bucket "$BUCKET" --key oficina-lab/terraform.tfstate >/dev/null 2>&1; then
+            echo "::error::State do oficina-mvp-infra-iac não encontrado em $BUCKET. Suba o infra-iac primeiro."
+            exit 1
+          fi
+          echo "bucket=$BUCKET" >> "$GITHUB_OUTPUT"
+
       - name: Terraform Init
-        run: terraform init
+        run: terraform init -backend-config="bucket=${{ steps.state.outputs.bucket }}"
 
       - name: Terraform Apply
         env:
           TF_VAR_aws_region: ${{ vars.AWS_DEFAULT_REGION }}
+          TF_VAR_infra_state_bucket: ${{ steps.state.outputs.bucket }}
         run: terraform apply -auto-approve -input=false

@@ -23,8 +23,8 @@ nenhuma linha de Terraform. Este repositório substitui isso por um RDS de verda
   (banco `oficina_mvp`, usuário `oficina`), roda as migrations do Flyway e atende o fluxo completo; o destroy
   pelo pipeline também funciona.
 - O ambiente **não fica ligado** (crédito limitado do AWS Academy): é recriado para testes e para a gravação.
-  Passo a passo: **runbook do projeto** (`runbook/RUNBOOK.md` no repositório de specs). Depois de cada apply, o
-  endpoint e a senha do RDS (que mudam) vão para `DB_HOST`/`DB_PASSWORD` do backend: `node wire-endpoints.js rds`.
+  Passo a passo: **[guia de gravação/runbook](https://github.com/lukebria/oficina-mvp-infra-iac/blob/master/runbook/RUNBOOK.md)**. O endpoint e a senha do RDS (que mudam a cada recriação) são lidos
+  da AWS pelo próprio deploy do backend — nada para copiar à mão.
 - **Chave `DEPLOY_ENABLED`**: com `false` (padrão) os merges só validam; com `true` (ou disparo manual) aplicam
   na AWS. Ver [CI/CD](#️-4-cicd-github-actions).
 - No console da AWS: **RDS → Databases → `oficina-mecnica-lab-postgres`** (`Name = oficina-mvp-postgres`) e
@@ -89,7 +89,9 @@ Mesmas restrições do repositório `oficina-mvp-infra-iac` (mesma conta de labo
 ### 3.4. State remoto
 
 Backend S3 (`backends.tf`): reaproveita o **mesmo bucket** de state do `oficina-mvp-infra-iac`
-(`oficina-mvp-tfstate-536036031274`), com uma **key própria** (`oficina-lab/db/terraform.tfstate`) para não
+(`oficina-mvp-tfstate-<conta AWS>`, criado pelo infra-iac na 1ª subida em cada conta e calculado pelo
+`scripts/state-bucket.sh` a partir das credenciais — plano 18: qualquer integrante sobe no próprio Learner Lab sem
+editar código), com uma **key própria** (`oficina-lab/db/terraform.tfstate`) para não
 colidir com o state daquele repositório. Lock via a **mesma tabela DynamoDB** (`oficina-mvp-infra-iac-tf-lock`) — states
 diferentes não colidem porque o `LockID` inclui bucket+key.
 
@@ -110,7 +112,7 @@ falha, porque o backend não consegue adquirir lock numa tabela inexistente. Ord
 | `db_allocated_storage` | `20` | Armazenamento em GB |
 | `db_name` | `oficina_mvp` | Nome do banco de dados inicial |
 | `db_username` | `oficina` | Usuário administrador (sensível) |
-| `infra_state_bucket` | `oficina-mvp-tfstate-536036031274` | Bucket do state do repo de infra K8s (para o remote state) |
+| `infra_state_bucket` | — (o workflow passa `oficina-mvp-tfstate-<conta>`) | Bucket do state do repo de infra K8s (para o remote state) |
 | `infra_state_key` | `oficina-lab/terraform.tfstate` | Key do state do repo de infra K8s |
 
 ### 3.6. Outputs
@@ -136,14 +138,15 @@ export AWS_SECRET_ACCESS_KEY="..."
 export AWS_SESSION_TOKEN="..."
 export AWS_DEFAULT_REGION="us-east-1"
 
-# 2. Inicializar o backend remoto (S3 + lock DynamoDB compartilhado)
-terraform init
+# 2. Inicializar o backend remoto (S3 + lock DynamoDB compartilhado) no bucket da conta das credenciais
+BUCKET=$(bash scripts/state-bucket.sh)
+terraform init -backend-config="bucket=$BUCKET"
 
 # 3. Ver o que seria criado
-terraform plan
+terraform plan -var="infra_state_bucket=$BUCKET"
 
 # 4. Aplicar
-terraform apply
+terraform apply -var="infra_state_bucket=$BUCKET"
 
 # 5. Conferir o endpoint gerado
 terraform output rds_endpoint
@@ -196,13 +199,14 @@ Proteção de branch: `master` exige Pull Request (sem commit direto) e bloqueia
 
 ## 🧩 5. Como este repositório se encaixa no projeto
 
-A aplicação principal (`oficina-mvp-java-backend`) usa este RDS como banco: o pipeline dela lê a variable
-`DB_HOST` (endpoint do RDS) e o secret `DB_PASSWORD` (senha do Secrets Manager), sem editar YAML. Ordem de
+A aplicação principal (`oficina-mvp-java-backend`) usa este RDS como banco: o deploy dela lê da AWS o endpoint
+do RDS (`oficina-mecnica-lab-postgres`) e a senha do Secrets Manager (`oficina-mecnica-lab-rds-password`), sem
+variable para atualizar nem YAML para editar. Ordem de
 aplicação: `oficina-mvp-infra-iac` **primeiro** (este repo lê o remote state dele: VPC, subnets e security group
 do cluster), depois este, depois a aplicação.
 
-O `k8s/banco.yaml` (Postgres em pod) ainda existe no repo da aplicação como **fallback**: só é usado se `DB_HOST`
-não estiver configurada. Removê-lo é um passo futuro, sem pressa, já que o ambiente é recriado do zero a cada vez.
+O antigo `k8s/banco.yaml` (Postgres em pod, fallback) foi removido do repo da aplicação em 12/10/2026: o banco é
+só este RDS.
 
 Histórico da decisão: `plans/01-infra-db-novo-repo.md` (repositório de specs do projeto).
 
