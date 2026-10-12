@@ -28,10 +28,16 @@ jobs:
         with:
           terraform_version: 1.5.0
 
+      # Plano 18: bucket de state da conta das credenciais
+      - name: State bucket
+        id: state
+        run: echo "bucket=$(bash scripts/state-bucket.sh)" >> "$GITHUB_OUTPUT"
+
       - name: Terraform Init
-        run: terraform init
+        run: terraform init -backend-config="bucket=${{ steps.state.outputs.bucket }}"
 
       - name: Terraform Destroy
         env:
           TF_VAR_aws_region: ${{ vars.AWS_DEFAULT_REGION }}
+          TF_VAR_infra_state_bucket: ${{ steps.state.outputs.bucket }}
         run: terraform destroy -auto-approve -input=false
